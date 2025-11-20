@@ -4,79 +4,121 @@
 % License: MIT License
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{mincv}[2025/11/20 Minimalistic CV Class]
+\ProvidesClass{mincv}[2025/11/21 Minimalistic CV Class]
 
-% Base Class and Packages
 \LoadClass[10pt, a4paper]{article}
 
+% Required packages
 \RequirePackage[T1]{fontenc}
 \RequirePackage{geometry}
-\RequirePackage{hyperref}
 \RequirePackage{titlesec}
 \RequirePackage{fontawesome5}
 \RequirePackage{graphicx}
 \RequirePackage{ifthen}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{enumitem}
+\RequirePackage{hyperref}
 \RequirePackage[scaled=0.9]{helvet}
 \renewcommand{\familydefault}{\sfdefault}
 
-% Page layout
+% Color definitions
+\definecolor{textgray}{HTML}{3D3D3D}
+\definecolor{primarycolor}{HTML}{00014A} 
+
+% Page layout configuration
 \geometry{
-  left=0.75in,
-  right=0.75in,
-  top=0.75in,
-  bottom=0.75in,
+  left=0.5in,
+  right=0.5in,
+  top=0.5in,
+  bottom=0.5in,
   noheadfoot
 }
-\pagestyle{empty} % No page numbers
-\setlength{\parindent}{0pt} % No paragraph indentation
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
 
-% Hyperlink setup
+% Hyperlink configuration
 \hypersetup{
-    colorlinks=false,
-    pdfborder={0 0 0}
+    colorlinks=true,
+    linkcolor=primarycolor,
+    urlcolor=textgray,
+    pdftitle={CV},
 }
 
-% Header setup
-\newcommand{\makecvheader}[7]{%
+% Variables for header data
+\newcommand{\@firstname}{}
+\newcommand{\@lastname}{}
+\newcommand{\@jobtitle}{}
+\newcommand{\@location}{}
+\newcommand{\@phone}{}
+\newcommand{\@email}{}
+\newcommand{\@github}{}
+\newcommand{\@linkedin}{}
+\newcommand{\@photo}{}
+
+% Commands to set header data
+\newcommand{\cvname}[2]{\renewcommand{\@firstname}{#1}\renewcommand{\@lastname}{#2}}
+\newcommand{\cvjob}[1]{\renewcommand{\@jobtitle}{#1}}
+\newcommand{\cvlocation}[1]{\renewcommand{\@location}{#1}}
+\newcommand{\cvphone}[1]{\renewcommand{\@phone}{#1}}
+\newcommand{\cvemail}[1]{\renewcommand{\@email}{#1}}
+\newcommand{\cvgithub}[1]{\renewcommand{\@github}{#1}}
+\newcommand{\cvlinkedin}[1]{\renewcommand{\@linkedin}{#1}}
+\newcommand{\cvphoto}[1]{\renewcommand{\@photo}{#1}}
+
+% Header rendering
+\newcommand{\makecvheader}{%
   \begin{center}
-    \begin{minipage}[c]{0.78\textwidth}
-      {\Huge\bfseries #1}\\[10pt]
-      {\normalsize #2}\\[2pt]
-      {\small #3 \quad | \quad \href{mailto:#4}{#4}}\\[2pt]
+    \begin{minipage}[c]{0.82\textwidth}
+      {\Huge\bfseries\color{textgray}\@firstname\ \color{primarycolor}\@lastname}\\[6pt]
+      \ifdefempty{\@jobtitle}{}{{\Large\color{textgray}\@jobtitle}\\[4pt]}
+      {\small\color{textgray}
+       \ifdefempty{\@location}{}{\@location \hspace{0.5em}|\hspace{0.5em}}%
+       \href{mailto:\@email}{\@email}%
+       \ifdefempty{\@phone}{}{\hspace{0.5em}|\hspace{0.5em}\@phone}
+      }\\[2pt]
       {\small
-        \faGithub\ \href{#6}{GitHub} \quad | \quad
-        \faLinkedin\ \href{#5}{LinkedIn}
+        \ifdefempty{\@github}{}{%
+            \faGithub\ \href{\@github}{GitHub}\hspace{1em}%
+        }%
+        \ifdefempty{\@linkedin}{}{%
+            \faLinkedin\ \href{\@linkedin}{LinkedIn}%
+        }%
       }
     \end{minipage}%
     \hfill
-    \begin{minipage}[c]{0.18\textwidth}
-      \ifthenelse{\equal{#7}{}}
-        {} % no photo provided
-        {\includegraphics[width=\linewidth,clip,trim=0 0 0 0]{#7}}
+    \begin{minipage}[c]{0.15\textwidth}
+      \ifdefempty{\@photo}{}{%
+        \includegraphics[width=\linewidth,clip,trim=0 0 0 0]{\@photo}%
+      }
     \end{minipage}
   \end{center}
-  \vspace{10pt}
+  \vspace{5pt}
 }
-% Formatting for section title
+
+% Section formatting
 \titleformat{\section}
-  {\Large\scshape\raggedright}
+  {\Large\bfseries\color{primarycolor}\raggedright}
   {}{0em}{}
   [\titlerule]
-\titlespacing{\section}{0pt}{10pt}{8pt}
+\titlespacing{\section}{0pt}{8pt}{6pt}
 
-% Reusable spacing templates for entries
+% List formatting helper
+% rightmargin prevents bullet text from hitting the far right edge
 \newcommand{\entrybeforelist}{%
-  \begin{itemize}%
-    \setlength\itemsep{-0.5em}%
+  \begin{itemize}[rightmargin=1.5cm]% 
+    \setlength\itemsep{-0.3em}%
     \setlength\topsep{0pt}%
+    \setlength\partopsep{0pt}%
+    \setlength\parsep{0pt}%
 }
 
 \newcommand{\entryafterlist}{%
   \end{itemize}%
-  \vspace{8pt}%
+  \vspace{6pt}%
 }
 
-% Short environmnet for CV entry
+% Short entry environment (Title + Date only)
 \newenvironment{cventryshort}[2]
 {
   \noindent\textbf{#1} \hfill \textit{#2}%
@@ -86,27 +128,29 @@
   \entryafterlist
 }
 
-% Environmnet for CV entry
+% Full entry environment (Title, Org, Date, Location)
 \newenvironment{cventry}[4]
 {
   \noindent\textbf{#1} \hfill \textit{#4}\\
-  \noindent #2 \hfill \textit{#3}
+  {\noindent \color{textgray}#2 \hfill \textit{#3}} 
   \entrybeforelist
 }
 {
   \entryafterlist
 }
 
-% Environment for all skills
+% Skills environment
 \newenvironment{cvskills}
 {
   \begin{itemize}
+    \setlength\itemsep{0em}
+    \setlength\parskip{0pt}
 }
 {
   \end{itemize}
 }
 
-% Command for one skill entry
+% Skill item command
 \newcommand{\cvskill}[2]
 {
   \item \textbf{#1:} #2
